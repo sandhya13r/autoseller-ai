@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoSeller Marketplace</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #c8964c;
+    --accent-light: #f0d9b5;
+    --bg: #fafaf8;
+    --white: #ffffff;
+    --gray-50: #f8f8f6;
+    --gray-100: #f0efea;
+    --gray-300: #d4d3cc;
+    --gray-500: #9a9890;
+    --gray-700: #5a5850;
+    --gray-900: #1a1a18;
+    --success: #2d7a4f;
+    --success-light: #e8f5ee;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--gray-900); }
+
+  /* ── FAKE MARKETPLACE NAV ── */
+  .mp-nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 40px; height: 56px;
+    display: flex; align-items:center; justify-content:space-between;
+  }
+  .mp-nav-logo {
+    font-size: 22px; font-weight: 700; color: #e84118;
+    font-family: 'Playfair Display', serif;
+  }
+  .mp-nav-logo span { color: var(--gray-900); }
+  .mp-search {
+    flex:1; max-width: 400px; margin: 0 40px;
+    display: flex; align-items:center;
+    background: var(--gray-50); border: 1px solid var(--gray-300);
+    border-radius: 8px; padding: 8px 14px; gap:8px;
+  }
+  .mp-search input {
+    border: none; background: transparent; outline: none;
+    font-size: 14px; width: 100%; font-family: 'DM Sans', sans-serif;
+  }
+  .mp-nav-links { display:flex; gap:20px; font-size: 14px; color: var(--gray-700); }
+  .mp-nav-links a { text-decoration: none; color: inherit; }
+
+  /* ── SIMULATION BANNER ── */
+  .sim-banner {
+    background: linear-gradient(90deg, var(--primary), #2a2a4e);
+    color: white; padding: 10px 40px;
+    display: flex; align-items:center; justify-content:center; gap:12px;
+    font-size: 13px;
+  }
+  .sim-badge {
+    background: var(--accent); color: white;
+    padding: 2px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+  }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    padding: 12px 40px;
+    font-size: 12px; color: var(--gray-500);
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .breadcrumb a { color: var(--gray-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--accent); }
+
+  /* ── MAIN LAYOUT ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 40px; }
+  .product-layout {
+    display: grid; grid-template-columns: 1fr 380px; gap: 40px;
+  }
+
+  /* ── LEFT — PRODUCT ── */
+  .product-images {
+    margin-bottom: 24px;
+  }
+  .main-image {
+    width: 100%; height: 380px;
+    background: var(--gray-100);
+    border-radius: 16px; overflow: hidden;
+    display: flex; align-items:center; justify-content:center;
+    margin-bottom: 12px; position: relative;
+  }
+  .main-image img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .main-image .placeholder { font-size: 80px; }
+  .condition-badge {
+    position: absolute; top:16px; left:16px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: rgba(255,255,255,0.95);
+    color: var(--success);
+  }
+  .product-info {}
+  .product-category {
+    font-size: 12px; color: var(--gray-500);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .product-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700; color: var(--primary);
+    margin-bottom: 8px; line-height: 1.2;
+  }
+  .product-meta {
+    display: flex; gap:16px; align-items:center;
+    margin-bottom: 16px; font-size: 13px; color: var(--gray-500);
+  }
+  .product-meta span { display:flex; align-items:center; gap:4px; }
+  .product-desc {
+    font-size: 15px; color: var(--gray-700); line-height: 1.8;
+    margin-bottom: 24px;
+  }
+
+  /* ── FEATURES LIST ── */
+  .features-section { margin-bottom: 24px; }
+  .features-title {
+    font-size: 14px; font-weight: 700; color: var(--primary);
+    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .features-list { display:flex; flex-direction:column; gap:8px; }
+  .feature-item {
+    display: flex; gap:10px; align-items:center;
+    font-size: 14px; color: var(--gray-700);
+  }
+  .feature-check { color: var(--success); font-size: 16px; }
+
+  /* ── COMPETING ── */
+  .competing-section { margin-bottom: 24px; }
+  .competing-title {
+    font-size: 13px; font-weight: 600; color: var(--gray-700);
+    margin-bottom: 12px;
+  }
+  .competing-list { display:flex; flex-direction:column; gap:8px; }
+  .competing-item {
+    display: flex; justify-content:space-between; align-items:center;
+    padding: 10px 14px; border-radius: 8px;
+    background: var(--gray-50); border: 1px solid var(--gray-100);
+    font-size: 13px;
+  }
+  .competing-item-title { color: var(--gray-700); }
+  .competing-item-price { font-weight: 600; color: var(--primary); }
+  .competing-item-platform { font-size: 11px; color: var(--gray-500); }
+
+  /* ── RIGHT — BUY CARD ── */
+  .buy-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 20px; padding: 28px;
+    box-shadow: var(--shadow-lg);
+    position: sticky; top: 24px;
+    height: fit-content;
+  }
+  .buy-card::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 20px 20px 0 0;
+  }
+  .price-display {
+    margin-bottom: 20px;
+  }
+  .price-label { font-size: 12px; color: var(--gray-500); margin-bottom: 4px; }
+  .price-main {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 700; color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .price-original {
+    font-size: 14px; color: var(--gray-500);
+    text-decoration: line-through;
+  }
+  .price-savings {
+    font-size: 13px; color: var(--success); font-weight: 600;
+    background: var(--success-light); padding: 3px 10px;
+    border-radius: 20px; display: inline-block; margin-top: 6px;
+  }
+
+  /* ── SELLER INFO ── */
+  .seller-info {
+    display: flex; gap:12px; align-items:center;
+    padding: 14px 0; border-top: 1px solid var(--gray-100);
+    border-bottom: 1px solid var(--gray-100); margin-bottom: 20px;
+  }
+  .seller-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--accent-light);
+    display: flex; align-items:center; justify-content:center;
+    font-size: 18px;
+  }
+  .seller-name { font-size: 14px; font-weight: 600; color: var(--primary); }
+  .seller-badge { font-size: 11px; color: var(--success); }
+
+  /* ── STATS ── */
+  .listing-stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px; margin-bottom: 20px;
+  }
+  .stat-item { text-align: center; }
+  .stat-val { font-size: 18px; font-weight: 700; color: var(--primary); }
+  .stat-label { font-size: 11px; color: var(--gray-500); }
+
+  /* ── CTA BUTTON ── */
+  .cta-btn {
+    width: 100%; padding: 16px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items:center; justify-content:center; gap:10px;
+    margin-bottom: 12px;
+  }
+  .cta-btn:hover {
+    background: #2a2a4e;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(26,26,46,0.2);
+  }
+  .cta-btn-secondary {
+    width: 100%; padding: 12px;
+    background: transparent; color: var(--primary);
+    border: 1px solid var(--gray-300); border-radius: 12px;
+    font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+    margin-bottom: 16px;
+  }
+  .cta-btn-secondary:hover { border-color: var(--primary); }
+
+  /* ── TRUST BADGES ── */
+  .trust-badges {
+    display: flex; gap:12px; justify-content:center;
+    padding-top: 16px; border-top: 1px solid var(--gray-100);
+  }
+  .trust-badge {
+    display: flex; flex-direction:column; align-items:center; gap:4px;
+    font-size: 11px; color: var(--gray-500); text-align: center;
+  }
+  .trust-badge span { font-size: 20px; }
+
+  /* ── CHAT MODAL ── */
+  #chat-modal {
+    display: none;
+    position: fixed; inset:0; z-index: 999;
+    background: rgba(0,0,0,0.5);
+    align-items: center; justify-content: center;
+  }
+  #chat-modal.show { display: flex; }
+  .modal-card {
+    background: var(--white);
+    border-radius: 20px; padding: 32px;
+    max-width: 480px; width: 90%;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 600; color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .modal-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
+  .modal-input-group { margin-bottom: 16px; }
+  .modal-label {
+    font-size: 12px; font-weight: 600; color: var(--gray-700);
+    text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px;
+    display: block;
+  }
+  .modal-input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--gray-300); border-radius: 8px;
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-actions { display:flex; gap:10px; }
+  .modal-btn-primary {
+    flex:1; padding: 12px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .modal-btn-primary:hover { background: #2a2a4e; }
+  .modal-btn-cancel {
+    padding: 12px 20px;
+    background: transparent; color: var(--gray-700);
+    border: 1px solid var(--gray-300); border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--primary); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; z-index: 9999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width:768px) {
+    .product-layout { grid-template-columns: 1fr; }
+    .container { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- FAKE MARKETPLACE NAV -->
+<div class="mp-nav">
+  <div class="mp-nav-logo">OL<span>X</span></div>
+  <div class="mp-search">
+    <span>🔍</span>
+    <input type="text" placeholder="Search for anything..." value="iPhone 13"/>
+  </div>
+  <div class="mp-nav-links">
+    <a href="#">Buy</a>
+    <a href="#">Sell</a>
+    <a href="#">Chat</a>
+  </div>
+</div>
+
+<!-- SIMULATION BANNER -->
+<div class="sim-banner">
+  <span class="sim-badge">🎬 SIMULATION</span>
+  <span>This is a simulated marketplace page for demo purposes. In production, this would be a real OLX/Facebook listing.</span>
+</div>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="#">Home</a> › <a href="#">Electronics</a> › <a href="#">Mobile Phones</a> › iPhone 13
+</div>
+
+<div class="container">
+  <div class="product-layout">
+
+    <!-- LEFT -->
+    <div class="product-left">
+      <div class="product-images">
+        <div class="main-image">
+          <div class="placeholder" id="product-image">📱</div>
+          <div class="condition-badge" id="condition-badge">✓ Good Condition</div>
+        </div>
+      </div>
+
+      <div class="product-info">
+        <div class="product-category" id="product-category">MOBILES · ELECTRONICS</div>
+        <div class="product-title" id="product-title">Apple iPhone 13 128GB — Good Condition</div>
+        <div class="product-meta">
+          <span>📍 Chennai, Tamil Nadu</span>
+          <span>👁 32 views</span>
+          <span>🕐 Listed today</span>
+        </div>
+        <div class="product-desc" id="product-desc">
+          Selling my iPhone 13 in good condition. Screen perfect, battery health 89%.
+          Minor scratch on back panel. All original accessories included.
+          Serious buyers only — chat with AI agent for instant response.
+        </div>
+
+        <div class="features-section">
+          <div class="features-title">Key Features</div>
+          <div class="features-list" id="features-list">
+            <div class="feature-item"><span class="feature-check">✓</span> 128GB Storage</div>
+            <div class="feature-item"><span class="feature-check">✓</span> A15 Bionic Chip</div>
+            <div class="feature-item"><span class="feature-check">✓</span> 5G Enabled</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Original box included</div>
+            <div class="feature-item"><span class="feature-check">✓</span> Battery health 89%</div>
+          </div>
+        </div>
+
+        <div class="competing-section">
+          <div class="competing-title">Similar listings in your area</div>
+          <div class="competing-list" id="competing-list">
+            <div class="competing-item">
+              <div>
+                <div class="competing-item-title">iPhone 13 128GB — Excellent</div>
+                <div class="competing-item-platform">OLX · 2 days ago</div>
+              </div>
+              <div class="competing-item-price">₹45,000</div>
+            </div>
+            <div class="competing-item">
+              <div>
+                <div class="competing-item-title">Apple iPhone 13 With Box</div>
+                <div class="competing-item-platform">Facebook · 5 days ago</div>
+              </div>
+              <div class="competing-item-price">₹43,500</div>
+            </div>
+            <div class="competing-item">
+              <div>
+                <div class="competing-item-title">iPhone 13 — Urgent Sale</div>
+                <div class="competing-item-platform">OLX · 1 week ago</div>
+              </div>
+              <div class="competing-item-price">₹39,000</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT — BUY CARD -->
+    <div class="buy-card">
+      <div class="price-display">
+        <div class="price-label">Asking Price</div>
+        <div class="price-main" id="price-main">₹55,902</div>
+        <div class="price-original">Original: ₹79,900</div>
+        <div class="price-savings">Save ₹23,998 (38% off MRP)</div>
+      </div>
+
+      <div class="seller-info">
+        <div class="seller-avatar">👤</div>
+        <div>
+          <div class="seller-name">Verified Seller</div>
+          <div class="seller-badge">✓ AI-Assisted Listing · Secure Transaction</div>
+        </div>
+      </div>
+
+      <div class="listing-stats">
+        <div class="stat-item">
+          <div class="stat-val">32</div>
+          <div class="stat-label">Views</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">5</div>
+          <div class="stat-label">Interested</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">Today</div>
+          <div class="stat-label">Listed</div>
+        </div>
+      </div>
+
+      <button class="cta-btn" onclick="openChatModal()">
+        🤖 Talk with AI Agent
+      </button>
+      <button class="cta-btn-secondary" onclick="openChatModal()">
+        💬 Ask a Question
+      </button>
+
+      <div class="trust-badges">
+        <div class="trust-badge">
+          <span>🔒</span>
+          Secure Pay
+        </div>
+        <div class="trust-badge">
+          <span>🚚</span>
+          Doorstep
+        </div>
+        <div class="trust-badge">
+          <span>🤖</span>
+          AI Agent
+        </div>
+        <div class="trust-badge">
+          <span>✅</span>
+          Verified
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div id="chat-modal">
+  <div class="modal-card">
+    <div class="modal-title">Chat with AI Agent 🤖</div>
+    <div class="modal-sub">Enter your details to start negotiating with our AI agent. It's instant!</div>
+    <div class="modal-input-group">
+      <label class="modal-label">Your Name</label>
+      <input type="text" class="modal-input" id="modal-name" placeholder="e.g. Priya Sharma"/>
+    </div>
+    <div class="modal-input-group">
+      <label class="modal-label">Mobile Number</label>
+      <input type="text" class="modal-input" id="modal-phone" placeholder="10-digit number"/>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeChatModal()">Cancel</button>
+      <button class="modal-btn-primary" onclick="startChat()">Start Chatting →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  const ITEM_ID = window.location.pathname.split('/').pop();
+  const BASE_URL = 'http://127.0.0.1:8000';
+
+  // ── Load item data
+  window.onload = async () => {
+    // load image from localStorage FIRST (instant)
+    const savedImg = localStorage.getItem('img_' + ITEM_ID);
+    if (savedImg) {
+    const container = document.getElementById('product-image');
+    container.innerHTML = `<img src="${savedImg}" style="width:100%;height:350px;object-fit:cover;border-radius:20px;"/>`;
+}
+    try {
+      const res = await fetch(`${BASE_URL}/agent/status/${ITEM_ID}`);
+      const data = await res.json();
+      updatePage(data);
+    } catch(e) {
+      console.log('Could not load item data');
+    }
+  };
+
+  function updatePage(data) {
+  if (data.item_data) {
+    const item = data.item_data;
+
+    document.getElementById('product-title').textContent =
+      item.title || 'Second-hand Item';
+
+    document.getElementById('product-category').textContent =
+      (item.category || 'OTHER').toUpperCase() + ' · ' + (item.brand || '');
+
+    document.getElementById('product-desc').textContent =
+      item.description || document.getElementById('product-desc').textContent;
+
+    document.getElementById('condition-badge').textContent =
+      '✓ ' + (item.condition || 'good')
+        .replace('_',' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+
+    
+
+    // features
+    if (item.key_features && item.key_features.length) {
+      document.getElementById('features-list').innerHTML =
+        item.key_features.map(f =>
+          `<div class="feature-item"><span class="feature-check">✓</span> ${f}</div>`
+        ).join('');
+    }
+  }
+
+  // price
+  if (data.asking_price) {
+    document.getElementById('price-main').textContent =
+      '₹' + parseInt(data.asking_price).toLocaleString('en-IN');
+  }
+}
+  function openChatModal() { 
+    document.getElementById('chat-modal').classList.add('show');
+   } 
+   function closeChatModal() {
+    document.getElementById('chat-modal').classList.remove('show'); }
+  async function startChat() {
+    const name = document.getElementById('modal-name').value.trim();
+    const phone = document.getElementById('modal-phone').value.trim();
+
+    if (!name || !phone) { 
+      showToast('Please fill in your details'); 
+      return; 
+    }
+
+    try {
+      await fetch(`${BASE_URL}/chat/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_id: ITEM_ID,
+          name: name,
+          phone: phone
+        })
+      });
+    } catch(e) {}
+
+    window.location.href = `/chat/${ITEM_ID}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

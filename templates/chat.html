@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoSeller AI — Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--primary:#1a1a2e;--accent:#c8964c;--accent-light:#f0d9b5;--bg:#fafaf8;--white:#ffffff;--gray-50:#f8f8f6;--gray-100:#f0efea;--gray-300:#d4d3cc;--gray-500:#9a9890;--gray-700:#5a5850;--gray-900:#1a1a18;--success:#2d7a4f;--success-light:#e8f5ee;--shadow:0 4px 24px rgba(0,0,0,0.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--gray-900);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{background:var(--white);border-bottom:1px solid var(--gray-100);padding:0 20px;height:62px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.agent-info{display:flex;align-items:center;gap:12px;}
+.agent-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#2a2a4e);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.agent-name{font-weight:600;font-size:15px;color:var(--primary);}
+.agent-status{font-size:12px;color:var(--success);display:flex;align-items:center;gap:4px;}
+.live{width:6px;height:6px;border-radius:50%;background:var(--success);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.item-chip{display:flex;align-items:center;gap:8px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:20px;padding:6px 14px;font-size:13px;}
+.chip-price{font-weight:700;color:var(--accent);}
+
+/* LAYOUT */
+.chat-layout{flex:1;display:grid;grid-template-columns:1fr 260px;overflow:hidden;}
+
+/* MESSAGES */
+.chat-area{display:flex;flex-direction:column;overflow:hidden;}
+.messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;}
+
+/* MESSAGE BUBBLES */
+.msg{display:flex;gap:9px;max-width:78%;}
+.msg.agent{align-self:flex-start;}
+.msg.buyer{align-self:flex-end;flex-direction:row-reverse;}
+.msg-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.msg.agent .msg-av{background:linear-gradient(135deg,var(--primary),#2a2a4e);}
+.msg.buyer .msg-av{background:var(--accent-light);}
+.bubble{padding:11px 15px;border-radius:16px;font-size:14px;line-height:1.6;}
+.msg.agent .bubble{background:var(--white);border:1px solid var(--gray-100);color:var(--gray-900);border-radius:4px 16px 16px 16px;box-shadow:var(--shadow);}
+.msg.buyer .bubble{background:var(--primary);color:white;border-radius:16px 4px 16px 16px;}
+.bubble.deal{background:var(--success-light)!important;border:1px solid #86efac!important;color:var(--gray-900)!important;}
+.bubble.counter{background:var(--accent-light)!important;border:1px solid var(--accent)!important;color:var(--gray-900)!important;}
+.msg-time{font-size:10px;color:var(--gray-500);margin-top:3px;}
+.msg.buyer .msg-time{text-align:right;}
+
+/* PAYMENT CARD */
+.pay-card{background:var(--white);border:1px solid var(--gray-100);border-radius:12px;padding:16px;margin-top:8px;box-shadow:var(--shadow);max-width:260px;}
+.pay-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray-500);margin-bottom:6px;}
+.pay-amount{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--accent);margin-bottom:12px;}
+.pay-btn{width:100%;padding:10px;background:var(--success);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.pay-btn:hover{background:#1d6b40;}
+.pay-btn:disabled{opacity:0.6;cursor:not-allowed;}
+
+/* TYPING */
+.typing{display:none;align-self:flex-start;}
+.typing.show{display:flex;gap:9px;align-items:center;}
+.typing-bubble{background:var(--white);border:1px solid var(--gray-100);border-radius:4px 16px 16px 16px;padding:12px 16px;box-shadow:var(--shadow);display:flex;gap:4px;align-items:center;}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--gray-500);animation:typing 1.2s infinite;}
+.tdot:nth-child(2){animation-delay:0.2s;}
+.tdot:nth-child(3){animation-delay:0.4s;}
+@keyframes typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* QUICK REPLIES */
+.quick-wrap{padding:10px 20px 0;display:flex;gap:7px;flex-wrap:wrap;flex-shrink:0;}
+.qr{padding:6px 13px;border-radius:20px;font-size:12px;background:var(--white);border:1px solid var(--gray-300);color:var(--gray-700);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.qr:hover{border-color:var(--accent);color:var(--accent);}
+
+/* INPUT */
+.input-area{padding:14px 20px;background:var(--white);border-top:1px solid var(--gray-100);display:flex;gap:10px;align-items:flex-end;flex-shrink:0;}
+.input-box{flex:1;padding:11px 16px;border:1px solid var(--gray-300);border-radius:24px;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;resize:none;max-height:100px;overflow-y:auto;transition:border-color 0.2s;background:var(--gray-50);min-height:44px;}
+.input-box:focus{border-color:var(--accent);background:var(--white);}
+.send-btn{width:44px;height:44px;border-radius:50%;background:var(--primary);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all 0.2s;flex-shrink:0;}
+.send-btn:hover{background:#2a2a4e;transform:scale(1.05);}
+.send-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+
+/* SIDEBAR */
+.chat-sidebar{border-left:1px solid var(--gray-100);padding:18px;overflow-y:auto;background:var(--white);display:flex;flex-direction:column;gap:16px;}
+.sb-section-title{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray-500);margin-bottom:10px;}
+.sb-item-card{background:var(--gray-50);border:1px solid var(--gray-100);border-radius:12px;padding:14px;}
+.sb-iname{font-size:14px;font-weight:600;color:var(--primary);margin-bottom:3px;}
+.sb-iprice{font-size:20px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.sb-icond{font-size:12px;color:var(--gray-500);}
+.neg-status{background:var(--gray-50);border:1px solid var(--gray-100);border-radius:12px;padding:14px;}
+.neg-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--gray-100);font-size:13px;}
+.neg-row:last-child{border-bottom:none;}
+.neg-l{color:var(--gray-500);}
+.neg-v{font-weight:600;color:var(--primary);}
+.neg-v.accent{color:var(--accent);}
+.neg-v.success{color:var(--success);}
+
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;background:var(--primary);color:white;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:500;transform:translateY(60px);opacity:0;transition:all 0.3s;}
+#toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="agent-info">
+    <div class="agent-av">🤖</div>
+    <div>
+      <div class="agent-name">AutoSeller AI Agent</div>
+      <div class="agent-status"><div class="live"></div>Online · Instant replies</div>
+    </div>
+  </div>
+  <div class="item-chip">
+    <span id="chip-title">Item</span>
+    <span class="chip-price" id="chip-price">₹—</span>
+  </div>
+</header>
+
+<div class="chat-layout">
+  <div class="chat-area">
+    <div class="messages" id="messages">
+      <div class="typing show" id="typing">
+        <div class="msg-av" style="background:linear-gradient(135deg,var(--primary),#2a2a4e);">🤖</div>
+        <div class="typing-bubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+      </div>
+    </div>
+
+    <div class="quick-wrap" id="quick-wrap">
+      <button class="qr" onclick="sendQ('Is this still available?')">Is this available?</button>
+      <button class="qr" onclick="sendQ('What is the exact condition?')">Condition?</button>
+      <button class="qr" onclick="sendQ('Can you reduce the price a bit?')">Negotiate price</button>
+      <button class="qr" onclick="sendQ('Are all accessories included?')">Accessories?</button>
+    </div>
+
+    <div class="input-area">
+      <textarea class="input-box" id="inp" placeholder="Type a message..." rows="1" onkeydown="handleKey(event)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <div class="chat-sidebar">
+    <div>
+      <div class="sb-section-title">Item Details</div>
+      <div class="sb-item-card">
+        <div class="sb-iname" id="sb-iname">Loading...</div>
+        <div class="sb-iprice" id="sb-iprice">₹—</div>
+        <div class="sb-icond" id="sb-icond">—</div>
+      </div>
+    </div>
+    <div>
+      <div class="sb-section-title">Negotiation</div>
+      <div class="neg-status">
+        <div class="neg-row"><span class="neg-l">Asking</span><span class="neg-v accent" id="neg-ask">₹—</span></div>
+        <div class="neg-row"><span class="neg-l">Your Offer</span><span class="neg-v" id="neg-offer">—</span></div>
+        <div class="neg-row"><span class="neg-l">Rounds</span><span class="neg-v" id="neg-rounds">0</span></div>
+        <div class="neg-row"><span class="neg-l">Status</span><span class="neg-v success" id="neg-status">Active</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const ITEM_ID = location.pathname.split('/').pop();
+const BASE = 'http://127.0.0.1:8000';
+const params = new URLSearchParams(location.search);
+const BUYER_NAME = params.get('name') || 'Buyer';
+let rounds = 0;
+let finalPrice = null;
+let isSending = false;
+
+window.onload = async () => {
+  await loadItemData();
+  await loadGreeting();
+};
+
+async function loadItemData() {
+  // try localStorage
+  const raw = localStorage.getItem('item_'+ITEM_ID);
+  if(raw) {
+    try {
+      const d = JSON.parse(raw);
+      const item = d.item_data || {};
+      const price = d.asking_price || 0;
+      document.getElementById('chip-title').textContent = item.title || 'Item';
+      document.getElementById('chip-price').textContent = price ? '₹'+parseInt(price).toLocaleString('en-IN') : '₹—';
+      document.getElementById('sb-iname').textContent = item.title || '—';
+      document.getElementById('sb-iprice').textContent = price ? '₹'+parseInt(price).toLocaleString('en-IN') : '₹—';
+      document.getElementById('sb-icond').textContent = item.condition || '—';
+      document.getElementById('neg-ask').textContent = price ? '₹'+parseInt(price).toLocaleString('en-IN') : '₹—';
+      return;
+    } catch(e){}
+  }
+  // fallback: fetch from backend
+  try {
+    const r = await fetch(`${BASE}/agent/status/${ITEM_ID}`);
+    const d = await r.json();
+    if(d.item_data) {
+      const item = d.item_data;
+      const price = d.asking_price || 0;
+      document.getElementById('chip-title').textContent = item.title || 'Item';
+      document.getElementById('chip-price').textContent = price ? '₹'+parseInt(price).toLocaleString('en-IN') : '₹—';
+      document.getElementById('sb-iname').textContent = item.title || '—';
+      document.getElementById('sb-iprice').textContent = price ? '₹'+parseInt(price).toLocaleString('en-IN') : '₹—';
+      document.getElementById('sb-icond').textContent = item.condition || '—';
+      document.getElementById('neg-ask').textContent = price ? '₹'+parseInt(price).toLocaleString('en-IN') : '₹—';
+    }
+  } catch(e){}
+}
+
+async function loadGreeting() {
+  try {
+    const r = await fetch(`${BASE}/chat/greeting/${ITEM_ID}`);
+    const d = await r.json();
+    hideTyping();
+    addMsg('agent', d.message || 'Hi! How can I help you?');
+  } catch(e) {
+    hideTyping();
+    addMsg('agent', `Hi ${BUYER_NAME}! 👋 I'm the AI assistant for this listing.\n\nI can answer your questions, negotiate the price, and help you complete your purchase securely. What would you like to know?`);
+  }
+}
+
+async function sendMessage() {
+  if(isSending) return;
+  const inp = document.getElementById('inp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+
+  inp.value = '';
+  inp.style.height = 'auto';
+  addMsg('buyer', msg);
+  document.getElementById('quick-wrap').style.display = 'none';
+
+  isSending = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+
+  try {
+    const r = await fetch(BASE+'/chat/message', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({item_id:ITEM_ID, message:msg})
+    });
+    const data = await r.json();
+    hideTyping();
+    isSending = false;
+    document.getElementById('send-btn').disabled = false;
+
+    if(!data.success || !data.reply) {
+      addMsg('agent', 'Sorry, I had trouble processing that. Please try again.');
+      return;
+    }
+
+    const reply = data.reply;
+    const type = reply.type || 'conversation';
+
+    if(type === 'deal_confirmed') {
+      finalPrice = reply.final_price;
+      addMsg('agent', reply.message, 'deal');
+      document.getElementById('neg-status').textContent = '🤝 Deal!';
+      setTimeout(() => showPayCard(finalPrice), 800);
+    } else if(type === 'counter') {
+      addMsg('agent', reply.message, 'counter');
+      rounds++;
+      document.getElementById('neg-rounds').textContent = rounds;
+      if(reply.counter_price) {
+        document.getElementById('neg-offer').textContent = '₹'+parseInt(reply.counter_price).toLocaleString('en-IN');
+      }
+    } else if(type === 'blocked') {
+      addMsg('agent', reply.message || 'I cannot process that request. Please keep the conversation about the item.');
+    } else {
+      addMsg('agent', reply.message);
+    }
+
+    // update offer display if buyer sent a price
+    const offerMatch = msg.match(/(?:₹\s*)?(\d[\d,]*\d|\d+)(?:\s*(?:k|thousand|rupees|rs))?/i);
+    if(offerMatch) {
+      let val = parseInt(offerMatch[1].replace(/,/g,''));
+      if(msg.toLowerCase().includes('k')) val *= 1000;
+      if(val >= 500 && val <= 1000000) {
+        document.getElementById('neg-offer').textContent = '₹'+val.toLocaleString('en-IN');
+      }
+    }
+
+  } catch(e) {
+    hideTyping();
+    isSending = false;
+    document.getElementById('send-btn').disabled = false;
+    addMsg('agent', 'Connection error. Please try again.');
+    console.error(e);
+  }
+}
+
+function sendQ(msg) {
+  document.getElementById('inp').value = msg;
+  sendMessage();
+}
+
+function addMsg(role, text, type='normal') {
+  const msgs = document.getElementById('messages');
+  const typing = document.getElementById('typing');
+  const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const av = role==='agent'?'🤖':'👤';
+  const bubClass = 'bubble'+(type==='deal'?' deal':type==='counter'?' counter':'');
+  const formatted = text.replace(/\n/g,'<br>');
+  const div = document.createElement('div');
+  div.className = 'msg '+role;
+  div.innerHTML = `<div class="msg-av">${av}</div><div><div class="${bubClass}">${formatted}</div><div class="msg-time">${now}</div></div>`;
+  msgs.insertBefore(div, typing);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showPayCard(amount) {
+  const msgs = document.getElementById('messages');
+  const typing = document.getElementById('typing');
+  const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = 'msg agent';
+  div.innerHTML = `
+    <div class="msg-av">🤖</div>
+    <div>
+      <div class="pay-card">
+        <div class="pay-label">Secure Payment</div>
+        <div class="pay-amount">₹${parseInt(amount).toLocaleString('en-IN')}</div>
+        <button class="pay-btn" id="pay-btn" onclick="processPayment(${amount})">💳 Pay Now via Razorpay</button>
+      </div>
+      <div class="msg-time">${now}</div>
+    </div>`;
+  msgs.insertBefore(div, typing);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function processPayment(amount) {
+  document.getElementById('pay-btn').disabled = true;
+  document.getElementById('pay-btn').textContent = 'Processing...';
+  showToast('Processing payment...');
+  try {
+    const r = await fetch(`${BASE}/payment/simulate-confirm/${ITEM_ID}`,{method:'POST'});
+    const d = await r.json();
+    if(d.success) {
+  // tell dashboard to show pickup panel
+  sessionStorage.setItem('payment_done_' + ITEM_ID, 'true');
+  
+  addMsg('agent', `✅ Payment of ₹${parseInt(amount).toLocaleString('en-IN')} confirmed!\n\n🎉 Your order is placed. The seller has been notified.\n\n📦 Delivery will be scheduled shortly. You will receive tracking updates soon!`, 'deal');
+  document.getElementById('neg-status').textContent = '✅ Paid';
+  showToast('🎉 Payment successful!');
+  setTimeout(()=>{ window.location.href='/tracking/'+ITEM_ID+'?role=buyer&name='+encodeURIComponent(BUYER_NAME); }, 2500);
+}
+  } catch(e) { showToast('Payment error. Try again.'); document.getElementById('pay-btn').disabled=false; document.getElementById('pay-btn').textContent='💳 Pay Now via Razorpay'; }
+}
+
+function showTyping(){const t=document.getElementById('typing');t.classList.add('show');const m=document.getElementById('messages');m.scrollTop=m.scrollHeight;}
+function hideTyping(){document.getElementById('typing').classList.remove('show');}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+</script>
+</body>
+</html>

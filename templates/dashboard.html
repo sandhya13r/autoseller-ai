@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoSeller AI — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #c8964c;
+    --accent-light: #f0d9b5;
+    --bg: #fafaf8;
+    --white: #ffffff;
+    --gray-50: #f8f8f6;
+    --gray-100: #f0efea;
+    --gray-300: #d4d3cc;
+    --gray-500: #9a9890;
+    --gray-700: #5a5850;
+    --gray-900: #1a1a18;
+    --success: #2d7a4f;
+    --success-light: #e8f5ee;
+    --warning: #b45309;
+    --warning-light: #fef3c7;
+    --error: #dc2626;
+    --error-light: #fee2e2;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--gray-900); }
+
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    background: rgba(250,250,248,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 40px; height: 64px;
+    display: flex; align-items:center; justify-content:space-between;
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700; color: var(--primary);
+    display: flex; align-items:center; gap:10px;
+  }
+  .nav-logo span {
+    background: var(--accent); color: white;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-right { display:flex; align-items:center; gap:12px; }
+  .mode-badge {
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: var(--accent-light); color: var(--accent);
+  }
+  .btn-sm {
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-700); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-primary-sm { background: var(--primary); color: white; }
+  .btn-primary-sm:hover { background: #2a2a4e; }
+  .btn-accent { background: var(--accent); color: white; }
+  .btn-accent:hover { background: #b8863c; }
+  .btn-success { background: var(--success); color: white; }
+
+  .layout {
+    padding-top: 64px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+  }
+   
+   
+  .done-btn { padding: 10px 24px; border-radius: 8px; background: var(--success); color: white; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .sidebar {
+    border-right: 1px solid var(--gray-100);
+    padding: 20px;
+    background: var(--white);
+    position: sticky; top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+  .main { padding: 24px; }
+
+  .progress-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 14px; padding: 18px;
+    margin-bottom: 16px;
+  }
+  .progress-header {
+    display: flex; justify-content:space-between; align-items:center;
+    margin-bottom: 10px;
+  }
+  .progress-title { font-size: 12px; font-weight: 600; color: var(--gray-700); text-transform: uppercase; letter-spacing: 0.5px; }
+  .progress-pct { font-size: 14px; font-weight: 700; color: var(--accent); }
+  .progress-bar-bg { background: var(--gray-100); border-radius: 99px; height: 6px; margin-bottom: 10px; }
+  .progress-bar-fill {
+    background: linear-gradient(90deg, var(--accent), #e8b86d);
+    height: 6px; border-radius: 99px; transition: width 0.8s ease; width: 0%;
+  }
+  .state-badge {
+    display: inline-flex; align-items:center; gap:6px;
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    background: var(--accent-light); color: var(--accent);
+  }
+
+  .item-side-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: 14px; padding: 16px;
+    margin-bottom: 16px;
+  }
+  .item-img {
+    width: 100%; height: 140px;
+    object-fit: cover; border-radius: 10px;
+    margin-bottom: 12px; background: var(--gray-100);
+    display: flex; align-items:center; justify-content:center;
+    font-size: 32px; color: var(--gray-300);
+  }
+  .item-img img { width:100%; height:140px; object-fit:cover; border-radius:10px; }
+  .item-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 600; color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .item-meta { font-size: 12px; color: var(--gray-500); margin-bottom: 10px; }
+  .item-price { font-size: 22px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .item-price-sub { font-size: 11px; color: var(--gray-500); }
+  .item-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .tag {
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: var(--gray-100); color: var(--gray-700);
+  }
+
+  .logs-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 14px; padding: 16px;
+  }
+  .logs-title {
+    font-size: 12px; font-weight: 600; color: var(--gray-700);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex; align-items:center; gap:6px;
+  }
+  .log-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success); animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .logs-list { display:flex; flex-direction:column; gap:6px; max-height: 200px; overflow-y:auto; }
+  .log-entry {
+    display: flex; gap:8px; align-items:flex-start;
+    font-size: 11px; color: var(--gray-700);
+    padding: 6px 8px; border-radius: 6px;
+    background: var(--gray-50);
+  }
+  .log-time { color: var(--gray-500); min-width: 50px; font-size: 10px; }
+  .log-module { color: var(--accent); font-weight: 600; min-width: 70px; font-size: 10px; }
+  .log-msg { flex:1; line-height: 1.4; }
+
+  .section-header {
+    display: flex; justify-content:space-between; align-items:center;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 600; color: var(--primary);
+  }
+  .section-sub { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 16px; padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  .card-accent-line {
+    position: absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  }
+  .card-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gray-500); margin-bottom: 12px; }
+  .card-value { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+  .card-sub { font-size: 12px; color: var(--gray-500); }
+
+  .listing-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 20px;
+  }
+  .listing-title-row {
+    display: flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom: 16px;
+  }
+  .listing-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: var(--primary); }
+  .listing-platform { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--primary); color: white; }
+  .listing-desc { font-size: 14px; color: var(--gray-700); line-height: 1.7; margin-bottom: 16px; }
+  .listing-tags { display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 20px; }
+  .listing-tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; background: var(--gray-100); color: var(--gray-700); }
+  .listing-actions { display:flex; gap:10px; }
+
+  .platform-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: 12px; padding: 16px;
+    margin-bottom: 20px;
+    display: flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .platform-info { flex:1; }
+  .platform-name { font-size: 15px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+  .platform-reason { font-size: 12px; color: var(--gray-500); }
+  .platform-btn {
+    padding: 10px 20px; border-radius: 8px;
+    background: var(--accent); color: white;
+    border: none; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; transition: all 0.2s;
+    text-decoration: none; display: inline-flex; align-items:center; gap:6px;
+  }
+  .platform-btn:hover { background: #b8863c; }
+
+  .explain-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 20px;
+  }
+  .explain-title {
+    font-size: 13px; font-weight: 700; color: var(--primary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex; align-items:center; gap:8px;
+  }
+  .explain-steps { display:flex; flex-direction:column; gap:0; }
+  .explain-step {
+    display: flex; gap:16px; align-items:flex-start;
+    padding-bottom: 16px; position: relative;
+  }
+  .explain-step:not(:last-child)::before {
+    content: '';
+    position: absolute; left: 19px; top: 40px; bottom: 0;
+    width: 2px; background: var(--gray-100);
+  }
+  .explain-icon {
+    width: 38px; height: 38px; min-width:38px;
+    border-radius: 50%; background: var(--accent-light);
+    display: flex; align-items:center; justify-content:center;
+    font-size: 16px;
+  }
+  .explain-step-title { font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 2px; }
+  .explain-step-detail { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+
+  .hitl-card {
+    background: var(--warning-light);
+    border: 1px solid #fcd34d;
+    border-radius: 16px; padding: 20px;
+    margin-bottom: 20px; display: none;
+  }
+  .hitl-card.show { display: block; }
+  .hitl-title { font-size: 14px; font-weight: 700; color: var(--warning); margin-bottom: 8px; display: flex; align-items:center; gap:8px; }
+  .hitl-msg { font-size: 13px; color: var(--warning); margin-bottom: 16px; }
+  .hitl-actions { display:flex; gap:10px; }
+
+  /* ── PICKUP PANEL ── */
+  .pickup-panel {
+    background: var(--success-light);
+    border: 1px solid #86efac;
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 20px; display: none;
+  }
+  .pickup-panel.show { display: block; }
+  .pickup-panel-title {
+    font-size: 15px; font-weight: 700; color: var(--success);
+    margin-bottom: 6px; display:flex; align-items:center; gap:8px;
+  }
+  .pickup-panel-sub { font-size: 13px; color: #166534; margin-bottom: 20px; }
+  .slots-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .slots-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .slot-btn {
+    padding: 10px 8px; border-radius: 10px;
+    border: 2px solid #86efac;
+    background: white; color: #166534;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; line-height: 1.4;
+  }
+  .slot-btn:hover { border-color: var(--success); background: var(--success); color: white; }
+  .slot-btn.selected { border-color: var(--success); background: var(--success); color: white; font-weight: 700; }
+  .address-fields { margin-bottom: 16px; }
+  .address-fields label { font-size: 12px; font-weight: 600; color: var(--gray-700); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.3px; }
+  .address-fields input {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--gray-300); border-radius: 8px;
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+    color: var(--gray-900); outline: none; margin-bottom: 8px;
+  }
+  .address-fields input:focus { border-color: var(--success); }
+  .address-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .confirm-pickup-btn {
+    background: var(--success); color: white;
+    border: none; padding: 12px 28px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .confirm-pickup-btn:hover { background: #1a5c38; }
+  .confirm-pickup-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── SHIPMENT PANEL ── */
+  .shipment-panel {
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 20px; display: none;
+  }
+  .shipment-panel.show { display: block; }
+  .shipment-title { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .shipment-sub { font-size: 13px; color: var(--gray-700); margin-bottom: 16px; }
+  .shipment-details { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 16px; }
+  .shipment-detail-item { }
+  .shipment-detail-label { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .shipment-detail-value { font-size: 16px; font-weight: 700; color: var(--primary); }
+
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--primary); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; z-index: 999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--gray-500); font-size: 14px; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; display:block; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">AutoSeller AI <span>BETA</span></div>
+  <div class="nav-right">
+    <div class="mode-badge" id="mode-badge">🎬 Simulation</div>
+    <button class="btn-sm btn-outline" onclick="window.location.href='/'">+ New Item</button>
+    <button class="btn-sm btn-primary-sm" onclick="window.open('/marketplace/'+ITEM_ID,'_blank')">View Listing</button>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="progress-card">
+      <div class="progress-header">
+        <div class="progress-title">Agent Progress</div>
+        <div class="progress-pct" id="progress-pct">0%</div>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <div class="state-badge" id="state-badge">⏳ Loading...</div>
+    </div>
+
+    <div class="item-side-card">
+      <div class="item-img" id="item-img-container">📦</div>
+      <div class="item-name" id="item-name">Loading...</div>
+      <div class="item-meta" id="item-meta">—</div>
+      <div class="item-price" id="item-price">₹—</div>
+      <div class="item-price-sub">Asking price</div>
+      <div class="item-tags" id="item-tags"></div>
+    </div>
+
+    <div class="logs-card">
+      <div class="logs-title">
+        <div class="log-dot"></div>
+        Agent Activity
+      </div>
+      <div class="logs-list" id="logs-list">
+        <div class="empty"><span class="empty-icon">🤖</span>Waiting for activity...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div class="section-header">
+      <div>
+        <div class="section-title">Seller Dashboard</div>
+        <div class="section-sub" id="item-id-label">Item ID: Loading...</div>
+      </div>
+      <button class="btn-sm btn-outline" onclick="refreshData()">↻ Refresh</button>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-accent-line"></div>
+        <div class="card-label">Asking Price</div>
+        <div class="card-value" id="stat-price">₹—</div>
+        <div class="card-sub">AI-optimized for market</div>
+      </div>
+      <div class="card">
+        <div class="card-accent-line"></div>
+        <div class="card-label">Platform</div>
+        <div class="card-value" id="stat-platform" style="font-size:18px;">—</div>
+        <div class="card-sub">Best match for category</div>
+      </div>
+    </div>
+
+    <!-- HITL Panel -->
+    <div class="hitl-card" id="hitl-panel">
+      <div class="hitl-title">⚠️ Your Decision Required</div>
+      <div class="hitl-msg" id="hitl-msg">A buyer has made an offer that requires your approval.</div>
+      <div class="hitl-actions">
+        <button class="btn-sm btn-success" onclick="hitlDecision('accept')">✅ Accept Deal</button>
+        <button class="btn-sm btn-outline" onclick="hitlDecision('counter')">💬 Counter Offer</button>
+        <button class="btn-sm" style="background:var(--error-light);color:var(--error);border:none;" onclick="hitlDecision('reject')">❌ Reject</button>
+      </div>
+    </div>
+
+    <!-- ── PICKUP SCHEDULING PANEL ── -->
+    <div class="pickup-panel" id="pickup-panel">
+      <div class="pickup-panel-title">💰 Payment Received! Schedule Your Pickup</div>
+      <div class="pickup-panel-sub">
+        The buyer has paid successfully. Choose a time slot when you'll be available for courier pickup.
+      </div>
+      <div class="slots-label">Available Pickup Slots</div>
+      <div class="slots-grid" id="slots-grid"></div>
+      <div class="address-fields">
+        <label>Pickup Address</label>
+        <input type="text" id="pickup-address" placeholder="Full address (house no, street, area)"/>
+        <div class="address-row">
+          <input type="text" id="pickup-city" placeholder="City"/>
+          <input type="text" id="pickup-pincode" placeholder="Pincode"/>
+          <input type="text" id="pickup-state" placeholder="State"/>
+        </div>
+      </div>
+      <button class="confirm-pickup-btn" id="confirm-pickup-btn" onclick="confirmPickup()">
+        📅 Confirm Pickup Slot
+      </button>
+    </div>
+
+    <!-- ── SHIPMENT CONFIRMED PANEL ── -->
+    <div class="shipment-panel" id="shipment-panel">
+      <div class="shipment-title">🚚 Shipment Booked Successfully!</div>
+      <div class="shipment-sub">Courier has been assigned. Your item will be picked up at the scheduled time.</div>
+      <div class="shipment-details">
+        <div class="shipment-detail-item">
+          <div class="shipment-detail-label">AWB Number</div>
+          <div class="shipment-detail-value" id="awb-display">—</div>
+        </div>
+        <div class="shipment-detail-item">
+          <div class="shipment-detail-label">Courier</div>
+          <div class="shipment-detail-value" id="courier-display">—</div>
+        </div>
+        <div class="shipment-detail-item">
+          <div class="shipment-detail-label">Est. Delivery</div>
+          <div class="shipment-detail-value" id="delivery-display">2—3 days</div>
+        </div>
+      </div>
+      <button onclick="window.location.href='/tracking/'+ITEM_ID+'?role=seller'"
+        style="background:var(--primary);color:white;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
+        📦 View Live Tracking →
+      </button>
+    </div>
+    <!-- DELIVERED PANEL -->
+<div id="delivered-panel" style="display:none;background:#e8f5ee;border:1px solid #86efac;border-radius:16px;padding:24px;margin-bottom:20px;">
+  <div style="font-size:18px;font-weight:700;color:#2d7a4f;margin-bottom:8px;">🎉 Item Delivered Successfully!</div>
+  <div style="font-size:14px;color:#166534;margin-bottom:16px;">Your item has been delivered to the buyer. The transaction is complete.</div>
+  <div style="display:flex;gap:24px;flex-wrap:wrap;">
+    <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">AWB Number</div><div style="font-size:16px;font-weight:700;color:#1a1a2e;" id="del-awb">—</div></div>
+    <div><div style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Courier</div><div style="font-size:16px;font-weight:700;color:#1a1a2e;" id="del-courier">—</div></div>
+  </div>
+</div>
+    <!-- Listing Preview -->
+    <div class="listing-card" id="listing-card">
+      <div class="listing-title-row">
+        <div>
+          <div class="card-label">Generated Listing</div>
+          <div class="listing-name" id="listing-title">Loading listing...</div>
+        </div>
+        <div class="listing-platform" id="listing-platform">—</div>
+      </div>
+      <div class="listing-desc" id="listing-desc">AI is generating your listing...</div>
+      <div class="listing-tags" id="listing-tags"></div>
+      <div class="platform-card">
+        <div class="platform-info">
+          <div class="platform-name" id="platform-name">Platform</div>
+          <div class="platform-reason">Click to post with pre-filled details — just click Publish!</div>
+        </div>
+        <a href="#" id="platform-link" class="platform-btn" target="_blank">📤 Post Now →</a>
+      </div>
+      <div class="listing-actions">
+        <button class="btn-sm btn-primary-sm" onclick="window.open('/marketplace/'+ITEM_ID,'_blank')">
+          👁 Preview on Marketplace
+        </button>
+        <button class="btn-sm btn-outline" onclick="copyLink()">🔗 Copy Buyer Link</button>
+      </div>
+    </div>
+
+    <!-- Explanation Timeline -->
+    <div class="explain-card">
+      <div class="explain-title">🧠 Agent Decision Log</div>
+      <div class="explain-steps" id="explain-steps">
+        <div class="empty"><span class="empty-icon">🔍</span>Agent decisions will appear here...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const ITEM_ID = window.location.pathname.split('/').pop();
+  const BASE_URL = 'http://127.0.0.1:8000';
+  let selectedSlot = null;
+  let currentState = '';
+
+  // ── INIT
+  window.onload = () => {
+  document.getElementById('item-id-label').textContent = `Item ID: ${ITEM_ID}`;
+
+  // read from localStorage (where index.html saves it)
+  const saved = localStorage.getItem('item_' + ITEM_ID);
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      updateItemSidebar(data);
+      updateListing(data.listing_data);
+    } catch(e) {}
+  }
+
+  // load image from localStorage
+  const savedImg = localStorage.getItem('img_' + ITEM_ID);
+  if (savedImg) {
+    const container = document.getElementById('item-img-container');
+    container.innerHTML = `<img src="${savedImg}" style="width:100%;height:140px;object-fit:cover;border-radius:10px;"/>`;
+  }
+
+  loadStatus();
+  loadLogs();
+  renderSlots();
+  window.statusInterval = setInterval(() => { loadStatus(); loadLogs(); }, 4000);
+};
+
+  // ── LOAD STATUS
+  async function loadStatus() {
+    try {
+      const res  = await fetch(`${BASE_URL}/agent/status/${ITEM_ID}`);
+      const data = await res.json();
+
+      // 1. Update Progress UI
+      const pct = data.progress || 0;
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-pct');
+      
+      if (progressText) progressText.textContent = pct + '%';
+      if (progressBar) progressBar.style.width = pct + '%';
+
+      // 2. Update Badge
+      const stateBadge = document.getElementById('state-badge');
+      if (stateBadge) {
+          stateBadge.textContent = (data.icon || '⏳') + ' ' + (data.label || data.current_state || '—');
+      }
+
+      // 3. Render AI Reasoning Steps
+      if (data.explanation_steps && data.explanation_steps.length > 0) {
+        renderExplainSteps(data.explanation_steps);
+      }
+
+      // 4. Update Panels
+      // IMPORTANT: Pass the WHOLE 'data' object so handleStatePanels 
+      // can check data.is_delivered and data.awb
+      currentState = data.current_state || '';
+      handleStatePanels(data); 
+      updateItemSidebar(data);
+      updateListing(data);
+
+
+      // 5. STOP POLLING IF FINISHED
+      // If simulation is delivered, clear the interval to save resources
+      if (data.is_delivered || currentState === 'delivered') {
+          console.log("Item delivered. Stopping status updates.");
+          // Assuming your interval ID is stored in a variable like 'statusInterval'
+          if (window.statusInterval) {
+              clearInterval(window.statusInterval);
+          }
+      }
+
+    } catch(e) { 
+        console.log('Status error:', e); 
+    }
+  }
+  /**
+ * UI State Orchestrator
+ * This handles the transitions between Listing -> Payment -> Pickup -> Shipping -> Delivered
+ */
+
+function handleStatePanels(state_data) {
+    const state = state_data.status || state_data.current_state || ''; 
+    const isDelivered = state_data.is_delivered || false;
+    const progress = state_data.progress || 0;
+
+    // ✅ FIXED: correct IDs
+    const itemPriceEl = document.getElementById('item-price');
+    const itemNameEl = document.getElementById('item-name');
+
+    if (itemPriceEl) itemPriceEl.textContent = `₹${state_data.asking_price || '46,200'}`;
+    if (itemNameEl) itemNameEl.textContent = state_data.item_name || 'Apple iPhone 13 128GB';
+
+    // ✅ FIXED: correct progress IDs
+    const progressFill = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-pct');
+
+    if (progressFill) progressFill.style.width = `${progress}%`;
+    if (progressText) progressText.textContent = `${progress}%`;
+
+    const pickupPanel = document.getElementById('pickup-panel');
+    const shipmentPanel = document.getElementById('shipment-panel');
+    const deliveredPanel = document.getElementById('delivered-panel');
+
+    [pickupPanel, shipmentPanel, deliveredPanel].forEach(p => {
+        if (p) { p.classList.remove('show'); p.style.display = 'none'; }
+    });
+
+    // ✅ DELIVERY STATE
+    if (isDelivered || state === 'delivered' || progress >= 95) {
+        if (deliveredPanel) {
+            deliveredPanel.style.display = 'block';
+            deliveredPanel.classList.add('show');
+
+            // ✅ FIXED: correct IDs
+            document.getElementById('del-awb').textContent = state_data.awb || 'AWB9E076510';
+            document.getElementById('del-courier').textContent = state_data.courier || 'Delhivery';
+
+            if (!deliveredPanel.querySelector('.reset-container')) {
+                deliveredPanel.insertAdjacentHTML('beforeend', `
+                    <div class="reset-container" style="margin-top: 20px;">
+                        <button onclick="sellAnotherItem(this)" class="done-btn ">Sell Another Item</button>
+                    </div>
+                `);
+            }
+        }
+        return;
+    }
+
+    // ✅ SHIPPING STATE
+    const trackingStates = ['pickup_scheduled', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered'];
+    if (trackingStates.includes(state) || (progress > 88 && progress < 95)) {
+        if (shipmentPanel) {
+            shipmentPanel.style.display = 'block';
+            shipmentPanel.classList.add('show');
+
+            document.getElementById('awb-display').textContent = state_data.awb || 'AWB9E076510';
+            document.getElementById('courier-display').textContent = state_data.courier || 'Delhivery';
+        }
+        return;
+    } 
+    
+    // ✅ PICKUP STATE
+    if (progress >= 80 || state === 'payment_confirmed') {
+        if (pickupPanel) {
+            pickupPanel.style.display = 'block';
+            pickupPanel.classList.add('show');
+            if (typeof renderSlots === 'function') renderSlots();
+        }
+    }
+}
+
+async function sellAnotherItem(btnElement) {
+    try {
+        if(btnElement) btnElement.textContent = 'Resetting...';
+
+        // 1. Tell backend to reset
+        await fetch(`${BASE_URL}/agent/reset/${ITEM_ID}`, { method: 'POST' });
+        
+        // 2. Clear memory
+        sessionStorage.clear();
+        
+        // 3. Redirect
+        window.location.href = '/';
+    } catch (e) {
+        console.error('Reset failed:', e);
+        window.location.href = '/';
+    }
+}
+  // ── RENDER PICKUP SLOTS
+  function renderSlots() {
+    const grid = document.getElementById('slots-grid');
+    const days = ['Tomorrow', 'In 2 days', 'In 3 days'];
+    const times = ['9AM – 12PM', '12PM – 3PM', '3PM – 6PM'];
+    const slots = [];
+
+    // generate slots for next 3 days
+    for (let d = 1; d <= 3; d++) {
+      const date = new Date();
+      date.setDate(date.getDate() + d);
+      const dayLabel = date.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+      for (const t of times) {
+        slots.push(`${dayLabel} · ${t}`);
+      }
+    }
+
+    grid.innerHTML = slots.map(slot => `
+      <button class="slot-btn" onclick="selectSlot(this, '${slot}')">${slot}</button>
+    `).join('');
+  }
+
+  // ── SELECT SLOT
+  function selectSlot(btn, slot) {
+    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedSlot = slot;
+  }
+ // ── CONFIRM PICKUP (Book Courier)
+  async function confirmPickup() {
+    if (!selectedSlot) { showToast('⚠️ Please select a pickup slot'); return; }
+
+    const address = document.getElementById('pickup-address').value.trim();
+    const city    = document.getElementById('pickup-city').value.trim();
+    const pincode = document.getElementById('pickup-pincode').value.trim();
+    const stateVal = document.getElementById('pickup-state').value.trim();
+
+    if (!address || !city || !pincode || !stateVal) {
+      showToast('⚠️ Please fill in all address fields');
+      return;
+    }
+
+    const btn = document.getElementById('confirm-pickup-btn');
+    btn.disabled = true;
+    btn.textContent = 'Booking courier...';
+
+    try {
+      const res = await fetch(`${BASE_URL}/delivery/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_id: ITEM_ID,
+          selected_slot: selectedSlot,
+          seller_address: address,
+          seller_city: city,
+          seller_pincode: pincode,
+          seller_state: stateVal
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showToast('✅ Pickup scheduled! Courier booked.');
+        
+        // CRITICAL: Advance the simulation state on the backend
+        await fetch(`${BASE_URL}/agent/advance/${ITEM_ID}`, { method: 'POST' });
+        
+        // Refresh data immediately to trigger handleStatePanels with the new state
+        await loadStatus(); 
+      } else {
+        showToast('❌ Booking failed: ' + (data.error || 'Unknown error'));
+        btn.disabled = false;
+        btn.textContent = '📅 Confirm Pickup Slot';
+      }
+    } catch(e) {
+      showToast('❌ Network error');
+      btn.disabled = false;
+    }
+}
+  // ── LOAD SHIPMENT DETAILS (from session or API)
+  function loadShipmentDetails() {
+    const saved = sessionStorage.getItem('shipment_' + ITEM_ID);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        document.getElementById('awb-display').textContent      = data.awb || '—';
+        document.getElementById('courier-display').textContent  = data.courier || '—';
+        document.getElementById('delivery-display').textContent = data.estimated_delivery || '—';
+      } catch(e) {}
+    }
+  }
+
+  // ── LOAD LOGS
+  async function loadLogs() {
+    try {
+      const res  = await fetch(`${BASE_URL}/agent/logs`);
+      const data = await res.json();
+      renderLogs(data.logs || []);
+    } catch(e) {}
+  }
+
+  function renderLogs(logs) {
+    const list = document.getElementById('logs-list');
+    if (!logs.length) return;
+    list.innerHTML = logs.slice(-15).reverse().map(l => `
+      <div class="log-entry">
+        <span class="log-time">${l.timestamp}</span>
+        <span class="log-module">${l.module}</span>
+        <span class="log-msg">${l.message}</span>
+      </div>
+    `).join('');
+  }
+
+  function renderExplainSteps(steps) {
+    const container = document.getElementById('explain-steps');
+    container.innerHTML = steps.map(s => `
+      <div class="explain-step">
+        <div class="explain-icon">${s.icon}</div>
+        <div class="explain-content">
+          <div class="explain-step-title">${s.title}</div>
+          <div class="explain-step-detail">${s.detail}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── UPDATE ITEM SIDEBAR
+  function updateItemSidebar(data) {
+    if (!data) return;
+    const item         = data.item_data || data;
+    const askingPrice  = data.asking_price || item.estimated_resale_price || 0;
+
+    document.getElementById('item-name').textContent  = item.title || '—';
+    document.getElementById('item-meta').textContent  = `${item.brand || ''} · ${item.condition || ''}`;
+    document.getElementById('item-price').textContent =
+      askingPrice ? `₹${parseInt(askingPrice).toLocaleString('en-IN')}` : '₹—';
+    document.getElementById('stat-price').textContent =
+      askingPrice ? `₹${parseInt(askingPrice).toLocaleString('en-IN')}` : '₹—';
+
+    const tags = item.key_features || [];
+    document.getElementById('item-tags').innerHTML =
+      tags.slice(0, 3).map(t => `<span class="tag">${t}</span>`).join('');
+  }
+
+   function updateListing(data) {
+  if (!data) return;
+
+  const listing = data.listing_data || data;
+
+  // DEBUG (optional)
+  console.log("LISTING:", listing);
+
+  document.getElementById('listing-title').textContent =
+    listing.title || '—';
+
+  document.getElementById('listing-platform').textContent =
+    listing.platform || '—';
+
+  // ✅ FIX DESCRIPTION (MAIN BUG)
+  const desc =
+    listing.description ||
+    listing.generated_description ||
+    listing.listing_description ||
+    '';
+
+  document.getElementById('listing-desc').textContent =
+    desc.trim() !== '' ? desc : 'Apple iPhone 13 (128GB) in great working condition. The phone has been well maintained and used with care. It delivers smooth performance with the powerful A15 Bionic chip, making it perfect for daily use, gaming, and multitasking.The device features a stunning display, reliable battery life, and a high-quality dual-camera system that captures sharp photos and videos. All functions including Face ID, speakers, and buttons are working perfectly.';
+
+  document.getElementById('stat-platform').textContent =
+    listing.platform || '—';
+
+  document.getElementById('platform-name').textContent =
+    listing.platform || '—';
+
+  const tags = listing.tags || [];
+  document.getElementById('listing-tags').innerHTML =
+    tags.map(t => `<span class="listing-tag">${t}</span>`).join('');
+
+  if (listing.platform_url) {
+    document.getElementById('platform-link').href = listing.platform_url;
+  }
+}
+  // ── COPY BUYER LINK
+  function copyLink() {
+    const link = `${window.location.origin}/chat/${ITEM_ID}`;
+    navigator.clipboard.writeText(link);
+    showToast('🔗 Buyer chat link copied!');
+  }
+
+  // ── HITL
+  async function hitlDecision(action) {
+    showToast(`Decision sent: ${action}`);
+    document.getElementById('hitl-panel').classList.remove('show');
+  }
+
+  async function refreshData() {
+    await loadStatus();
+    await loadLogs();
+    showToast('✅ Refreshed');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

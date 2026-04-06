@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoSeller AI — Order Tracking</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #c8964c;
+    --accent-light: #f0d9b5;
+    --bg: #fafaf8;
+    --white: #ffffff;
+    --gray-50: #f8f8f6;
+    --gray-100: #f0efea;
+    --gray-300: #d4d3cc;
+    --gray-500: #9a9890;
+    --gray-700: #5a5850;
+    --gray-900: #1a1a18;
+    --success: #2d7a4f;
+    --success-light: #e8f5ee;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--gray-900); }
+
+  nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 40px; height: 64px;
+    display: flex; align-items:center; justify-content:space-between;
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700; color: var(--primary);
+    display: flex; align-items:center; gap:10px;
+  }
+  .nav-logo span {
+    background: var(--accent); color: white;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 40px; }
+
+  /* ── SUCCESS HEADER ── */
+  .success-header {
+    text-align: center; margin-bottom: 40px;
+  }
+  .success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--success-light);
+    display: flex; align-items:center; justify-content:center;
+    font-size: 32px; margin: 0 auto 16px;
+    animation: bounceIn 0.6s ease;
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0); opacity:0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity:1; }
+  }
+  .success-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 700; color: var(--primary);
+    margin-bottom: 8px;
+  }
+  .success-sub { font-size: 16px; color: var(--gray-500); }
+
+  /* ── AWB CARD ── */
+  .awb-card {
+    background: var(--primary);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 24px; color: white;
+    display: flex; justify-content:space-between; align-items:center;
+  }
+  .awb-left {}
+  .awb-label { font-size: 11px; opacity:0.6; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+  .awb-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 700; margin-bottom: 4px;
+    letter-spacing: 2px;
+  }
+  .awb-courier { font-size: 13px; opacity: 0.8; }
+  .awb-right { text-align: right; }
+  .awb-eta-label { font-size: 11px; opacity:0.6; margin-bottom: 6px; }
+  .awb-eta {
+    font-size: 18px; font-weight: 600;
+    color: var(--accent-light);
+  }
+  .track-btn {
+    display: inline-block; margin-top: 10px;
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(255,255,255,0.15);
+    color: white; font-size: 12px; font-weight: 600;
+    text-decoration: none; cursor: pointer; border: none;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s;
+  }
+  .track-btn:hover { background: rgba(255,255,255,0.25); }
+
+  /* ── TRACKING TIMELINE ── */
+  .timeline-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 16px; padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .timeline-header {
+    display: flex; justify-content:space-between; align-items:center;
+    margin-bottom: 28px;
+  }
+  .timeline-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 600; color: var(--primary);
+  }
+  .timeline-refresh {
+    padding: 6px 14px; border-radius: 8px;
+    background: var(--gray-100); border: none;
+    font-size: 12px; font-weight: 600; color: var(--gray-700);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .timeline-refresh:hover { background: var(--gray-300); }
+
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .timeline-step { display: flex; gap: 20px; position: relative; }
+  .timeline-step:not(:last-child) { padding-bottom: 28px; }
+  .timeline-step:not(:last-child) .tl-line {
+    position: absolute; left: 19px; top: 40px; bottom: 0;
+    width: 2px; background: var(--gray-100);
+  }
+  .timeline-step.completed:not(:last-child) .tl-line { background: var(--success); }
+  .timeline-step.active:not(:last-child) .tl-line { background: var(--accent-light); }
+
+  .tl-dot {
+    width: 38px; height: 38px; min-width:38px; border-radius: 50%;
+    display: flex; align-items:center; justify-content:center;
+    font-size: 16px; border: 2px solid var(--gray-300);
+    background: var(--white); z-index:1;
+    transition: all 0.4s;
+  }
+  .timeline-step.completed .tl-dot {
+    border-color: var(--success); background: var(--success-light);
+  }
+  .timeline-step.active .tl-dot {
+    border-color: var(--accent); background: var(--accent-light);
+    animation: pulse-ring 2s infinite;
+  }
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(200,150,76,0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(200,150,76,0); }
+    100% { box-shadow: 0 0 0 0 rgba(200,150,76,0); }
+  }
+
+  .tl-content { flex:1; padding-top: 6px; }
+  .tl-label {
+    font-size: 15px; font-weight: 600; color: var(--gray-900);
+    margin-bottom: 2px;
+  }
+  .timeline-step.pending .tl-label { color: var(--gray-300); }
+  .tl-desc { font-size: 13px; color: var(--gray-500); margin-bottom: 3px; }
+  .timeline-step.pending .tl-desc { color: var(--gray-300); }
+  .tl-time { font-size: 11px; color: var(--gray-500); }
+
+  /* ── DEMO CONTROLS ── */
+  .demo-controls {
+    background: var(--accent-light);
+    border: 1px solid var(--accent);
+    border-radius: 12px; padding: 16px;
+    margin-bottom: 24px;
+    display: flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  .demo-label { font-size: 13px; font-weight: 600; color: var(--warning, #b45309); }
+  .demo-hint { font-size: 12px; color: var(--gray-700); }
+  .advance-btn {
+    padding: 8px 20px; border-radius: 8px;
+    background: var(--accent); color: white; border: none;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    white-space: nowrap; transition: all 0.2s;
+  }
+  .advance-btn:hover { background: #b8863c; }
+  .advance-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  /* ── ORDER SUMMARY ── */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .summary-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 14px; padding: 20px;
+  }
+  .summary-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--gray-500); margin-bottom: 8px;
+  }
+  .summary-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700; color: var(--primary);
+  }
+  .summary-sub { font-size: 12px; color: var(--gray-500); margin-top: 3px; }
+
+  /* ── CONTACT CARD ── */
+  .contact-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 16px; padding: 24px;
+    margin-bottom: 24px;
+  }
+  .contact-title {
+    font-size: 14px; font-weight: 700; color: var(--primary);
+    margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .contact-item {
+    background: var(--gray-50); border-radius: 10px; padding: 14px;
+    text-align: center;
+  }
+  .contact-icon { font-size: 24px; margin-bottom: 8px; display:block; }
+  .contact-role { font-size: 11px; color: var(--gray-500); margin-bottom: 4px; text-transform:uppercase; }
+  .contact-name { font-size: 14px; font-weight: 600; color: var(--primary); }
+  .contact-info { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+
+  /* ── DONE CARD ── */
+  .done-card {
+    background: var(--success-light);
+    border: 1px solid #86efac;
+    border-radius: 16px; padding: 24px;
+    text-align: center; display: none;
+  }
+  .done-card.show { display: block; }
+  .done-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px; font-weight: 700; color: var(--success);
+    margin-bottom: 8px;
+  }
+  .done-sub { font-size: 14px; color: var(--success); margin-bottom: 16px; }
+  .done-btn { padding: 10px 24px; border-radius: 8px; background: var(--success); color: white; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--primary); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; z-index: 999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">AutoSeller AI <span>BETA</span></div>
+  <div style="font-size:13px;color:var(--gray-500);">Order Tracking</div>
+</nav>
+
+<div class="container">
+
+  <!-- SUCCESS HEADER -->
+  <div class="success-header">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Order Confirmed!</div>
+    <div class="success-sub">Your item is on its way. Track the delivery below.</div>
+  </div>
+
+  <!-- AWB CARD -->
+  <div class="awb-card">
+    <div class="awb-left">
+      <div class="awb-label">Tracking Number</div>
+      <div class="awb-number" id="awb-number">Loading...</div>
+      <div class="awb-courier" id="awb-courier">Delhivery Express</div>
+    </div>
+    <div class="awb-right">
+      <div class="awb-eta-label">Estimated Delivery</div>
+      <div class="awb-eta" id="awb-eta">—</div>
+      <button class="track-btn" onclick="refreshTracking()">↻ Refresh Status</button>
+    </div>
+  </div>
+
+  <!-- DEMO CONTROLS -->
+  <div class="demo-controls">
+    <div>
+      
+      <div class="demo-label"> ❗Kindly go back to dashboard schedule to pickup before clicking Next Stage. </div>
+      <div class="demo-label">🎬 Demo Mode — Simulate Delivery </div>
+      <div class="demo-hint">Click to advance tracking stages for demo purposes. </div>
+    </div>
+    <button class="advance-btn" id="advance-btn" onclick="advanceTracking()">
+      ▶ Next Stage
+    </button>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline-card">
+    <div class="timeline-header">
+      <div class="timeline-title">Delivery Timeline</div>
+      <button class="timeline-refresh" onclick="refreshTracking()">↻ Refresh</button>
+    </div>
+    <div class="timeline" id="timeline">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-label">Amount Paid</div>
+      <div class="summary-value" id="summary-amount">₹—</div>
+      <div class="summary-sub">Via Razorpay · Secured</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Item</div>
+      <div class="summary-value" id="summary-item" style="font-size:16px;">—</div>
+      <div class="summary-sub" id="summary-condition">—</div>
+    </div>
+  </div>
+
+  <!-- CONTACT EXCHANGE -->
+  <div class="contact-card">
+    <div class="contact-title">Contact Details</div>
+    <div class="contact-grid">
+      <div class="contact-item">
+        <span class="contact-icon">👤</span>
+        <div class="contact-role">Seller</div>
+        <div class="contact-name">Verified Seller</div>
+        <div class="contact-info">Contact shared post-payment</div>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">🚚</span>
+        <div class="contact-role">Courier</div>
+        <div class="contact-name" id="contact-courier">Delhivery</div>
+        <div class="contact-info" id="contact-awb">AWB: —</div>
+      </div>
+      <div class="contact-item">
+        <span class="contact-icon">📦</span>
+        <div class="contact-role">Order ID</div>
+        <div class="contact-name" id="contact-order">—</div>
+        <div class="contact-info">AutoSeller AI</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELIVERED CARD -->
+  <div class="done-card" id="done-card">
+    <div class="done-title">🎉 Delivered Successfully!</div>
+    <div class="done-sub">Your item has been delivered. Thank you for using AutoSeller AI!</div>
+    <button class="done-btn" onclick="window.location.href='/'">Sell Another Item</button>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  const ITEM_ID = window.location.pathname.split('/').pop();
+  const BASE_URL = 'http://127.0.0.1:8000';
+
+  // ── INIT
+  window.onload = async () => {
+    await loadItemData();
+    await refreshTracking();
+    // auto-refresh every 8 seconds
+    setInterval(refreshTracking, 8000);
+  };
+
+  // ── LOAD ITEM DATA
+  async function loadItemData() {
+    try {
+      const res = await fetch(`${BASE_URL}/agent/status/${ITEM_ID}`);
+      const data = await res.json();
+      const mem = data;
+
+      if (data.item_data) {
+        document.getElementById('summary-item').textContent =
+          data.item_data.title || '—';
+        document.getElementById('summary-condition').textContent =
+          data.item_data.condition || '—';
+      }
+      if (data.final_price) {
+        document.getElementById('summary-amount').textContent =
+          `₹${parseInt(data.final_price).toLocaleString('en-IN')}`;
+      }
+    } catch(e) {}
+  }
+
+  // ── REFRESH TRACKING
+  async function refreshTracking() {
+    try {
+      const res = await fetch(`${BASE_URL}/delivery/track/${ITEM_ID}`);
+      const data = await res.json();
+      renderTimeline(data);
+      updateAWB(data);
+    } catch(e) {
+      // fallback timeline for demo
+      renderFallbackTimeline();
+    }
+  }
+
+  // ── ADVANCE STAGE (demo)
+  async function advanceTracking() {
+    const btn = document.getElementById('advance-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Advancing...';
+    try {
+      const res = await fetch(`${BASE_URL}/delivery/advance/${ITEM_ID}`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      renderTimeline(data);
+      updateAWB(data);
+      showToast('✅ Stage advanced: ' + data.label);
+
+      if (data.is_delivered) {
+        document.getElementById('done-card').classList.add('show');
+        btn.disabled = true;
+        btn.textContent = '✅ Delivered';
+      } else {
+        btn.disabled = false;
+        btn.textContent = '▶ Next Stage';
+      }
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = '▶ Next Stage';
+      showToast('Error advancing stage');
+    }
+  }
+
+  // ── RENDER TIMELINE
+  function renderTimeline(data) {
+    const timeline = document.getElementById('timeline');
+    const stages = data.timeline || [];
+
+    if (!stages.length) {
+      renderFallbackTimeline();
+      return;
+    }
+
+    timeline.innerHTML = stages.map((stage, i) => {
+      let cls = 'pending';
+      if (stage.completed && !stage.active) cls = 'completed';
+      if (stage.active) cls = 'active';
+
+      return `
+        <div class="timeline-step ${cls}">
+          <div class="tl-line"></div>
+          <div class="tl-dot">${stage.icon}</div>
+          <div class="tl-content">
+            <div class="tl-label">${stage.label}</div>
+            <div class="tl-desc">${stage.description}</div>
+            ${stage.timestamp ? `<div class="tl-time">${stage.timestamp}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (data.is_delivered) {
+      document.getElementById('done-card').classList.add('show');
+    }
+  }
+
+  // ── UPDATE AWB
+  function updateAWB(data) {
+    if (data.awb) {
+      document.getElementById('awb-number').textContent = data.awb;
+      document.getElementById('contact-awb').textContent = 'AWB: ' + data.awb;
+      document.getElementById('contact-order').textContent = data.awb;
+    }
+    if (data.courier) {
+      document.getElementById('awb-courier').textContent = data.courier;
+      document.getElementById('contact-courier').textContent = data.courier;
+    }
+    if (data.estimated_delivery) {
+      document.getElementById('awb-eta').textContent = data.estimated_delivery;
+    }
+  }
+
+  // ── FALLBACK TIMELINE
+  function renderFallbackTimeline() {
+    const stages = [
+      { icon:'📋', label:'Order Placed', desc:'Order confirmed and payment received', done: true },
+      { icon:'📅', label:'Pickup Scheduled', desc:'Courier assigned and pickup scheduled', done: true },
+      { icon:'📦', label:'Item Picked Up', desc:'Item collected by delivery partner', done: false, active: true },
+      { icon:'🚚', label:'In Transit', desc:'Item on the way to destination', done: false },
+      { icon:'🏍️', label:'Out for Delivery', desc:'Item is out for delivery today', done: false },
+      { icon:'🎉', label:'Delivered', desc:'Item delivered successfully', done: false },
+    ];
+
+    document.getElementById('timeline').innerHTML = stages.map(s => {
+      let cls = s.done ? 'completed' : s.active ? 'active' : 'pending';
+      return `
+        <div class="timeline-step ${cls}">
+          <div class="tl-line"></div>
+          <div class="tl-dot">${s.icon}</div>
+          <div class="tl-content">
+            <div class="tl-label">${s.label}</div>
+            <div class="tl-desc">${s.desc}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('awb-number').textContent = `AWB${ITEM_ID.substring(0,8).toUpperCase()}`;
+    document.getElementById('awb-courier').textContent = 'Delhivery Express';
+    document.getElementById('awb-eta').textContent = 'In 2-3 days';
+  }
+
+  // ── TOAST
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>

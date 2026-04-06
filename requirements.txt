@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+python-dotenv
+google-genai
+razorpay
+pillow
+python-multipart
+httpx
+jinja2
+apscheduler
+pydantic
+aiofiles

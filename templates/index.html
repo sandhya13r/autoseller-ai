@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoSeller AI — From Snapshot to Settlement</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #c8964c;
+    --accent-light: #f0d9b5;
+    --bg: #fafaf8;
+    --white: #ffffff;
+    --gray-50: #f8f8f6;
+    --gray-100: #f0efea;
+    --gray-300: #d4d3cc;
+    --gray-500: #9a9890;
+    --gray-700: #5a5850;
+    --gray-900: #1a1a18;
+    --success: #2d7a4f;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    background: rgba(250,250,248,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 0 40px;
+    height: 64px;
+    display: flex; align-items:center; justify-content:space-between;
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700;
+    color: var(--primary);
+    display: flex; align-items:center; gap:10px;
+  }
+  .nav-logo span {
+    background: var(--accent);
+    color: white;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.5px;
+  }
+  .nav-mode {
+    display: flex; align-items:center; gap:8px;
+    font-size: 13px; color: var(--gray-700);
+  }
+  .mode-toggle {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-300);
+    border-radius: 20px;
+    padding: 4px;
+    display: flex; gap:2px;
+    cursor: pointer;
+  }
+  .mode-btn {
+    padding: 4px 12px; border-radius: 16px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; border: none;
+    transition: all 0.2s;
+    background: transparent; color: var(--gray-500);
+  }
+  .mode-btn.active {
+    background: var(--primary); color: white;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 120px 40px 80px;
+    max-width: 1100px; margin: 0 auto;
+    display:grid; grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items:flex-start;
+  }
+  .hero-badge {
+    display: inline-flex; align-items:center; gap:6px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 20px;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+  .hero-badge::before {
+    content: ''; width:6px; height:6px;
+    background: var(--accent); border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(1.3); }
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 52px; font-weight: 700;
+    line-height: 1.1; color: var(--primary);
+    margin-bottom: 20px;
+  }
+  h1 em {
+    font-style: italic; color: var(--accent);
+  }
+  .hero-sub {
+    font-size: 17px; color: var(--gray-700);
+    line-height: 1.7; margin-bottom: 36px;
+    font-weight: 300;
+  }
+
+  /* ── UPLOAD CARD ── */
+  .upload-card {
+    background: var(--white);
+    border: 1px solid var(--gray-100);
+    border-radius: 20px;
+    padding: 36px;
+    box-shadow: var(--shadow-lg);
+    position: relative; overflow: hidden;
+  }
+  .upload-card::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--primary); margin-bottom: 6px;
+  }
+  .card-sub {
+    font-size: 13px; color: var(--gray-500);
+    margin-bottom: 24px;
+  }
+
+  /* ── DROP ZONE ── */
+  .drop-zone {
+    border: 2px dashed var(--gray-300);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--gray-50);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset:0;
+    opacity:0; cursor:pointer; width:100%; height:100%;
+  }
+  .drop-icon {
+    width: 48px; height: 48px;
+    background: var(--accent-light);
+    border-radius: 12px;
+    display: flex; align-items:center; justify-content:center;
+    margin: 0 auto 12px;
+    font-size: 22px;
+  }
+  .drop-text {
+    font-size: 14px; font-weight: 500;
+    color: var(--gray-700); margin-bottom: 4px;
+  }
+  .drop-hint {
+    font-size: 12px; color: var(--gray-500);
+  }
+  #preview-img {
+    width: 100%; height: 160px;
+    object-fit: cover; border-radius: 8px;
+    display: none; margin-bottom: 12px;
+  }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 16px; }
+  label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--gray-700); margin-bottom: 6px;
+    letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  input[type=text], textarea, select {
+    width: 100%; padding: 10px 14px;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px; font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gray-900); background: var(--white);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input[type=text]:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,150,76,0.1);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-primary:hover {
+    background: #2a2a4e;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(26,26,46,0.2);
+  }
+  .btn-primary:disabled {
+    opacity: 0.6; cursor: not-allowed; transform: none;
+  }
+
+  /* ── STEPS ── */
+  .steps {
+    display: flex; gap: 20px; margin-bottom: 32px;
+  }
+  .step {
+    display: flex; align-items:flex-start; gap:12px;
+    flex:1;
+  }
+  .step-num {
+    width: 32px; height: 32px; min-width:32px;
+    background: var(--accent-light);
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items:center; justify-content:center;
+    font-size: 13px; font-weight: 700;
+  }
+  .step-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--primary); margin-bottom: 3px;
+  }
+  .step-desc {
+    font-size: 12px; color: var(--gray-500);
+    line-height: 1.5;
+  }
+
+  /* ── FEATURES ── */
+  .features {
+    background: var(--white);
+    border-top: 1px solid var(--gray-100);
+    padding: 80px 40px;
+  }
+  .features-inner {
+    max-width: 1100px; margin: 0 auto;
+  }
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 600;
+    color: var(--primary); margin-bottom: 48px;
+  }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  }
+  .feature-card {
+    padding: 28px;
+    border: 1px solid var(--gray-100);
+    border-radius: 16px;
+    transition: all 0.3s;
+    background: var(--gray-50);
+  }
+  .feature-card:hover {
+    border-color: var(--accent-light);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+  .feature-icon {
+    font-size: 28px; margin-bottom: 16px;
+    display: block;
+  }
+  .feature-title {
+    font-size: 15px; font-weight: 600;
+    color: var(--primary); margin-bottom: 8px;
+  }
+  .feature-desc {
+    font-size: 13px; color: var(--gray-500); line-height: 1.6;
+  }
+
+  /* ── FLOW ── */
+  .flow {
+    padding: 80px 40px;
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-100);
+  }
+  .flow-inner { max-width: 1100px; margin: 0 auto; }
+  .flow-steps {
+    display: flex; gap: 0; margin-top: 48px;
+    position: relative;
+  }
+  .flow-steps::before {
+    content: '';
+    position: absolute;
+    top: 24px; left: 40px; right: 40px; height: 2px;
+    background: var(--gray-300);
+    z-index: 0;
+  }
+  .flow-step {
+    flex: 1; text-align: center; position: relative; z-index: 1;
+  }
+  .flow-dot {
+    width: 48px; height: 48px;
+    background: var(--white);
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    display: flex; align-items:center; justify-content:center;
+    margin: 0 auto 16px;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(200,150,76,0.15);
+  }
+  .flow-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--primary); margin-bottom: 4px;
+  }
+  .flow-hint {
+    font-size: 11px; color: var(--gray-500);
+  }
+
+  /* ── LOADING OVERLAY ── */
+  #loading-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(250,250,248,0.95);
+    backdrop-filter: blur(8px);
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px;
+  }
+  #loading-overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--gray-300);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; color: var(--primary);
+  }
+  .loading-sub {
+    font-size: 14px; color: var(--gray-500);
+  }
+  #loading-steps { display: flex; flex-direction:column; gap:8px; margin-top: 8px; }
+  .loading-step {
+    font-size: 13px; color: var(--gray-500);
+    display: flex; align-items:center; gap:8px;
+    opacity: 0; transition: opacity 0.4s;
+  }
+  .loading-step.active { opacity:1; color: var(--gray-900); }
+  .loading-step.done { opacity:1; color: var(--success); }
+  .loading-step .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gray-300);
+  }
+  .loading-step.active .dot { background: var(--accent); }
+  .loading-step.done .dot { background: var(--success); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--primary); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; z-index: 999;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 24px 40px;
+    border-top: 1px solid var(--gray-100);
+    text-align: center;
+    font-size: 12px; color: var(--gray-500);
+  }
+
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding: 100px 20px 40px; }
+    h1 { font-size: 36px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .flow-steps { flex-direction: column; }
+    .flow-steps::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    AutoSeller AI <span>BETA</span>
+  </div>
+  <div class="nav-mode">
+    <span>Mode:</span>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="sim-btn" onclick="setMode('simulation')">🎬 Simulation</button>
+      <button class="mode-btn" id="real-btn" onclick="setMode('real')">⚡ Real</button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">AI-Powered Commerce Agent</div>
+    <h1>Sell anything <em>smarter,</em> not harder.</h1>
+    <p class="hero-sub">
+      Upload a photo. Our AI analyzes, prices, lists, negotiates,
+      collects payment, and arranges delivery — all on autopilot.
+    </p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Upload Photo</div>
+          <div class="step-desc">AI identifies your item instantly</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Review Listing</div>
+          <div class="step-desc">AI generates title, price & platform</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Get Paid</div>
+          <div class="step-desc">AI negotiates & handles delivery</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD CARD -->
+  <div class="upload-card">
+    <div class="card-title">Start Selling</div>
+    <div class="card-sub">Upload your item photo to begin</div>
+
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept="image/*" onchange="handleFile(this)"/>
+      <img id="preview-img" src="" alt="preview"/>
+      <div id="drop-content">
+        <div class="drop-icon">📸</div>
+        <div class="drop-text">Drop your photo here</div>
+        <div class="drop-hint">JPG, PNG up to 10MB</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-bottom:16px;">
+  <span style="font-size:12px;color:var(--gray-500);">or</span>
+</div>
+<button 
+  type="button"
+  onclick="loadSampleItem()"
+  style="width:100%;padding:11px;background:var(--accent-light);color:var(--accent);border:1px solid var(--accent);border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;margin-bottom:16px;"
+  onmouseover="this.style.background='var(--accent)';this.style.color='white'"
+  onmouseout="this.style.background='var(--accent-light)';this.style.color='var(--accent)'"
+>
+  Use Sample iPhone 13 image 
+</button>
+
+    <div class="form-group">
+      <label>Your Name</label>
+      <input type="text" id="seller-name" placeholder="e.g. Rahul Sharma"/>
+    </div>
+
+    <div class="form-group">
+      <label>Item Description (optional)</label>
+      <textarea id="description" placeholder="Any details about your item — age, usage, accessories included..."></textarea>
+    </div>
+
+    <button class="btn-primary" id="upload-btn" onclick="uploadItem()" disabled>
+      <span>🤖</span> Analyze with AI
+    </button>
+  </div>
+</section>
+
+
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="features-inner">
+    <div class="section-label">Why AutoSeller AI</div>
+    <div class="section-title">Everything handled for you</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🔍</span>
+        <div class="feature-title">Smart Item Analysis</div>
+        <div class="feature-desc">Gemini AI identifies brand, model, condition and estimates fair market price in seconds.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📝</span>
+        <div class="feature-title">Auto Listing Generation</div>
+        <div class="feature-desc">Compelling titles, descriptions and tags generated automatically. One-click posting to OLX, Facebook & more.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💬</span>
+        <div class="feature-title">AI Negotiation Engine</div>
+        <div class="feature-desc">Our agent chats with buyers 24/7, evaluates offers, counters strategically and confirms deals.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔒</span>
+        <div class="feature-title">Risk Protection</div>
+        <div class="feature-desc">Every interaction is screened for suspicious patterns. You stay in control at critical moments.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💳</span>
+        <div class="feature-title">Secure Payments</div>
+        <div class="feature-desc">Razorpay integration ensures secure, instant payment collection. No cash, no risk.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🚚</span>
+        <div class="feature-title">Doorstep Pickup</div>
+        <div class="feature-desc">Shiprocket integration books courier automatically. Real-time tracking for both parties.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="flow">
+  <div class="flow-inner">
+    <div class="section-label">How It Works</div>
+    <div class="section-title">From photo to payment in minutes</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-dot">📸</div>
+        <div class="flow-label">Upload Photo</div>
+        <div class="flow-hint">Any item, any condition</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-dot">🤖</div>
+        <div class="flow-label">AI Analysis</div>
+        <div class="flow-hint">Instant identification</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-dot">📋</div>
+        <div class="flow-label">Auto Listing</div>
+        <div class="flow-hint">Posted to marketplace</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-dot">💬</div>
+        <div class="flow-label">Negotiation</div>
+        <div class="flow-hint">AI handles buyers</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-dot">💳</div>
+        <div class="flow-label">Payment</div>
+        <div class="flow-hint">Secured via Razorpay</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-dot">🎉</div>
+        <div class="flow-label">Delivered</div>
+        <div class="flow-hint">Tracked to doorstep</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © 2026 AutoSeller AI · Autonomous Commerce Agent · Built for hackathon
+</footer>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Analyzing your item...</div>
+  <div class="loading-sub">This takes about 5 seconds</div>
+  <div id="loading-steps">
+    <div class="loading-step" id="ls1"><div class="dot"></div> Processing image</div>
+    <div class="loading-step" id="ls2"><div class="dot"></div> Identifying item details</div>
+    <div class="loading-step" id="ls3"><div class="dot"></div> Estimating market price</div>
+    <div class="loading-step" id="ls4"><div class="dot"></div> Selecting best platform</div>
+    <div class="loading-step" id="ls5"><div class="dot"></div> Generating listing</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  const BASE_URL = 'http://127.0.0.1:8000';
+  let selFile = null;
+
+  // ── Mode toggle
+  async function setMode(mode) {
+    try {
+      await fetch(`${BASE_URL}/agent/mode/${mode}`, { method: 'POST' });
+      document.getElementById('sim-btn').classList.toggle('active', mode === 'simulation');
+      document.getElementById('real-btn').classList.toggle('active', mode === 'real');
+      showToast(`Switched to ${mode === 'simulation' ? '🎬 Simulation' : '⚡ Real'} mode`);
+    } catch(e) {
+      showToast('Could not switch mode');
+    }
+  }
+
+  // ── File handling
+  function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    selFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.getElementById('preview-img');
+      img.src = e.target.result;
+      img.style.display = 'block';
+      document.getElementById('drop-content').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    document.getElementById('upload-btn').disabled = false;
+  }
+
+  // ── Drag & Drop
+  const zone = document.getElementById('drop-zone');
+  zone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zone.classList.add('dragover');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('file-input').files = dt.files;
+      handleFile(document.getElementById('file-input'));
+    }
+  });
+  async function loadSampleItem() {
+  try {
+    const response = await fetch('/static/images/sample_iphone.jpeg');
+    const blob = await response.blob();
+    const file = new File([blob], 'sample_iphone.jpeg', { type: 'image/jpeg' });
+
+    selFile = file;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const preview = document.getElementById('preview-img');
+      const dropContent = document.getElementById('drop-content');
+
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      dropContent.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+
+    const nameField = document.getElementById('seller-name');
+    if (!nameField.value) nameField.value = 'Demo Seller';
+
+    const descField = document.getElementById('description');
+    if (!descField.value) {
+      descField.value = 'iPhone 13 128GB, excellent condition, original box included.';
+    }
+
+    document.getElementById('upload-btn').disabled = false;
+
+    showToast('Sample iPhone loaded! Click Analyze to continue.');
+
+  } catch (e) {
+    console.error(e);
+    showToast('Could not load sample image');
+  }
+}
+  // ── Upload & Analyze
+  async function uploadItem() {
+  if (!selFile) { showToast('Please select an image first'); return; }
+
+  const name = document.getElementById('seller-name').value.trim();
+  if (!name) { showToast('Please enter your name'); return; }
+
+  // save seller info
+  const sellerId = 'seller_' + Date.now();
+  localStorage.setItem('seller_id', sellerId);
+  localStorage.setItem('seller_name', name);
+
+  document.getElementById('loading-overlay').classList.add('show');
+  animateLoadingSteps();
+
+  try {
+    const formData = new FormData();
+    formData.append('file', selFile);
+    formData.append('seller_id', sellerId);
+    formData.append('description', document.getElementById('description').value);
+
+    const res = await fetch(`${BASE_URL}/upload/`, {
+      method: 'POST', body: formData
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      // ── save full upload result to localStorage
+      localStorage.setItem('item_' + data.item_id, JSON.stringify(data));
+
+      // ── save item_ids list
+      const ids = JSON.parse(localStorage.getItem('item_ids') || '[]');
+      if (!ids.includes(data.item_id)) ids.push(data.item_id);
+      localStorage.setItem('item_ids', JSON.stringify(ids));
+
+      // ── save image as base64 for dashboard + marketplace
+      const imgReader = new FileReader();
+      imgReader.onload = (e) => {
+        localStorage.setItem('img_' + data.item_id, e.target.result);
+        showToast('✅ Analysis complete! Redirecting...');
+        setTimeout(() => {
+          window.location.href = `/dashboard/${data.item_id}`;
+        }, 800);
+      };
+      imgReader.readAsDataURL(selFile);
+
+    } else {
+      hideLoading();
+      showToast('❌ ' + (data.error || 'Upload failed'));
+    }
+  } catch(e) {
+    hideLoading();
+    showToast('❌ Server error. Is the backend running?');
+    console.error(e);
+  }
+}
+  // ── Loading animation
+  function animateLoadingSteps() {
+    const steps = ['ls1','ls2','ls3','ls4','ls5'];
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        if (i > 0) document.getElementById(steps[i-1]).className = 'loading-step done';
+        document.getElementById(id).className = 'loading-step active';
+      }, i * 1200);
+    });
+  }
+  function hideLoading() {
+    document.getElementById('loading-overlay').classList.remove('show');
+  }
+
+  // ── Toast
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Init mode from server
+  fetch(`${BASE_URL}/health`).then(r => r.json()).then(d => {
+    if (d.mode === 'real') {
+      document.getElementById('sim-btn').classList.remove('active');
+      document.getElementById('real-btn').classList.add('active');
+    }
+  }).catch(() => {});
+  // save image for marketplace
+const imgReader = new FileReader();
+imgReader.onload = e => {
+  localStorage.setItem('img_'+data.item_id, e.target.result);
+};
+imgReader.readAsDataURL(selFile);
+</script>
+</body>
+</html>
