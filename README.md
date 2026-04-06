@@ -138,6 +138,7 @@ The system follows an autonomous loop:
 ---
 
 ## 🧱 Project Structure
+```
 autoseller_ai/
 │
 ├── app.py
@@ -234,7 +235,7 @@ autoseller_ai/
 │
 └── tests/
     └── test_agent_flow.py
-
+```
 
 ---
 
