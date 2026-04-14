@@ -292,6 +292,96 @@ Aligned with **SDG 12: Responsible Consumption and Production**
 Encourages reuse of products and reduces waste through easier resale.
 
 ---
+ ## 🚀 How to Run AutoSeller AI
+
+### Prerequisites
+- Python 3.11+
+- pip
+
+---
+
+### Step 1 — Clone the Repository
+```bash
+git clone https://github.com/yourusername/autoseller-ai.git
+cd autoseller-ai/autoseller_ai
+```
+
+### Step 2 — Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Step 3 — Set Up Environment Variables
+Create a `.env` file in the `autoseller_ai/` folder:
+```env
+GEMINI_API_KEY=your_gemini_api_key
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_secret
+SHIPROCKET_EMAIL=your_shiprocket_email
+SHIPROCKET_PASSWORD=your_shiprocket_password
+APP_MODE=simulation
+SECRET_KEY=autoseller_secret_2026
+DATABASE_URL=sqlite:///./autoseller.db
+BASE_URL=http://127.0.0.1:8000
+```
+
+> **Get API Keys:**
+> - Gemini: [aistudio.google.com](https://aistudio.google.com) — Free
+> - Razorpay: [razorpay.com](https://razorpay.com) — Test mode, Free
+> - Shiprocket: [shiprocket.in](https://shiprocket.in) — Free sandbox
+
+### Step 4 — Create Required Folders
+```bash
+mkdir uploads
+mkdir static/images
+```
+
+### Step 5 — Run the Server
+```bash
+python app.py
+```
+
+### Step 6 — Open in Browser
+
+## http://127.0.0.1:8000
+---
+
+### 🎬 Simulation Mode vs ⚡ Real Mode
+
+| Feature | Simulation | Real |
+|---|---|---|
+| Item Analysis | Fake iPhone 13 data | Gemini Vision AI |
+| Buyer Chat | Scripted replies | Gemini AI responses |
+| Payment | Instant confirm | Razorpay checkout |
+| Delivery | Manual advance | Shiprocket API |
+
+Toggle between modes using the switch on the top right of the app.
+
+> **For demo purposes, use Simulation Mode.**
+> Set `APP_MODE=simulation` in your `.env` file.
+
+---
+
+### 📁 Project Structure
+```bash
+autoseller_ai/
+├── app.py              # FastAPI entry point
+├── config.py           # Environment config
+├── agent/              # AI agent brain
+├── services/           # Business logic
+├── integrations/       # Gemini, Razorpay, Shiprocket
+├── routes/             # API endpoints
+├── templates/          # HTML pages
+├── simulations/        # Demo mode layer
+└── database/           # SQLite + models
+
+```
+---
+
+### ✅ Test the API
+Once server is running, visit:
+http://127.0.0.1:8000/docs
+This opens the Swagger UI with all API endpoints.
 
 ## 👩‍💻 Author
 
